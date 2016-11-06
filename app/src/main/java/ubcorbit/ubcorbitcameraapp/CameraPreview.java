@@ -73,18 +73,17 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
+    /**
+     * Sets camera picture size to optimal
+     */
     public void setupCamera() {
         Camera.Parameters parameters = camera.getParameters();
         List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
         Camera.Size optimalSize = getOptimalPreviewSize(sizes, PREVIEW_SIZE_MAX_WIDTH, PREVIEW_SIZE_MAX_HEIGHT);
         parameters.setPictureSize(optimalSize.width, optimalSize.height);
         camera.setParameters(parameters);
-//        Size bestPreviewSize = determineBestPreviewSize(parameters);
-//        Size bestPictureSize = determineBestPictureSize(parameters);
-//        parameters.setPreviewSize(bestPreviewSize.width, bestPreviewSize.height);
-//        parameters.setPictureSize(bestPictureSize.width, bestPictureSize.height);
-//        camera.setParameters(parameters);
     }
+
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
         final double ASPECT_TOLERANCE = 0.1;
