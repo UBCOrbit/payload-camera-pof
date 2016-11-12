@@ -10,6 +10,8 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,12 +24,15 @@ import java.util.Locale;
 @SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity {
 
-    public Button button;                               // image capture button
+    public Button button;                          // image capture button
     public String APP_NAME = "UBCOrbitCameraApp";
     public Camera theCamera;                            // reference to a device camera
     public CameraPreview preview;                       // view to display camera stream
     public FrameLayout previewLayout;                   // layout holding the camera preview
 
+    /**
+     * Gets called on image capture
+     */
     public Camera.PictureCallback JpegPictureCallback = new Camera.PictureCallback() {
 
         @Override
@@ -42,14 +47,19 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     FileOutputStream fos = new FileOutputStream(pictureFile);
                     fos.write(data);
-                    Log.d(APP_NAME, "onPictureTaken() : successfully wrote to file:");
+                    Log.d(APP_NAME, "onPictureTaken() : successfully wrote to file");
                     fos.close();
+                    Toast.makeText(getApplicationContext(), "OK!", Toast.LENGTH_SHORT).show();
+
+                    // TODO: refactor to async task
+                    camera.startPreview();
+
                 } catch (FileNotFoundException e) {
-                    Log.d(APP_NAME, "File not found: " + e.getMessage());
+                    Log.d(APP_NAME, "onPictureTaken() : file not found: " + e.getMessage());
                 } catch (IOException e) {
-                    Log.d(APP_NAME, "Error opening file: " + e.getMessage());
+                    Log.d(APP_NAME, "onPictureTaken() : error opening file: " + e.getMessage());
                 } catch (Exception e) {
-                    Log.d(APP_NAME, "Unknown error accessing file: " + e.getMessage());
+                    Log.d(APP_NAME, "onPictureTaken() : unexpected error accessing file: " + e.getMessage());
                 }
             } else {
                 Log.d(APP_NAME, "Error creating media file, check storage permissions");
@@ -65,16 +75,31 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         previewLayout = (FrameLayout) findViewById(R.id.camera_preview_layout);
 
-        if(deviceHasCamera()){
-            Log.d(APP_NAME, "Camera found");
-            theCamera = getCamera();
-            preview = new CameraPreview(getApplicationContext(), theCamera);
-            preview.setVisibility(View.VISIBLE);
-            previewLayout.addView(preview);
-        } else {
-            Log.d(APP_NAME, "No camera found on device");
-        }
+        initTheCamera();
+        initButton();
+    }
 
+    @Override
+    protected void onResume(){
+        super.onResume();
+        initTheCamera();
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        theCamera.stopPreview();
+        releaseCamera();
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        theCamera.stopPreview();
+        releaseCamera();
+    }
+
+    private void initButton(){
         button = (Button) findViewById(R.id.camera_button);
         if(button != null) {
             button.setOnClickListener(new View.OnClickListener() {
@@ -86,10 +111,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onPause(){
-        super.onPause();
-        releaseCamera();
+    private void initTheCamera(){
+        if(deviceHasCamera()){
+            Log.d(APP_NAME, "Camera found");
+            theCamera = getCamera();
+            preview = new CameraPreview(getApplicationContext(), theCamera);
+            preview.setVisibility(View.VISIBLE);
+            previewLayout.addView(preview);
+        } else {
+            Log.d(APP_NAME, "No camera found on device");
+        }
     }
 
     /**
@@ -161,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CANADA).format(new Date());
+        String timeStamp = new SimpleDateFormat("MMdd_HHmmss", Locale.CANADA).format(new Date());
         return new File(mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp + ".jpg");
     }
 }

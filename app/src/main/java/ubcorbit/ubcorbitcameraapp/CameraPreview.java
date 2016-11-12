@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -16,8 +17,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private SurfaceHolder holder;
     private Camera camera;
 
-    private static final int PREVIEW_SIZE_MAX_WIDTH = 1080;
-    private static final int PREVIEW_SIZE_MAX_HEIGHT = 1920;
+    // TODO: make dynamic and device independent
+    // TODO: try 2448 x 3264
+    private final static int PREVIEW_SIZE_MAX_WIDTH = 1080;
+    private final static int PREVIEW_SIZE_MAX_HEIGHT = 1920;
 
     public CameraPreview(Context context) {
         super(context);
@@ -31,6 +34,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         super(context);
         Log.d("UBCOrbitCameraApp", "CameraPreview.constructor");
         this.camera = camera;
+
+
         holder = getHolder();
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -74,7 +79,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     /**
-     * Sets camera picture size to optimal
+     * Optimizes camera preview size given max screen resolution
      */
     public void setupCamera() {
         Camera.Parameters parameters = camera.getParameters();
@@ -86,7 +91,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
+
+        double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double) h / w;
 
         if (sizes == null)
@@ -97,8 +103,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         for (Camera.Size size : sizes) {
             double ratio = (double) size.height / size.width;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE){
                 continue;
+            }
             if (Math.abs(size.height - h) < minDiff) {
                 optimalSize = size;
                 minDiff = Math.abs(size.height - h);
